@@ -1,14 +1,11 @@
 import React from 'react';
 
-import { Link } from 'react-router-dom';
+import TeacherList from './TeacherList'
 
 const Teacher = () => {
   return (
     <section className="teacher-content">
-      Teacher Page
-      <Link to="/">
-        Home
-      </Link>
+      <TeacherList />
     </section>
   );
 };
