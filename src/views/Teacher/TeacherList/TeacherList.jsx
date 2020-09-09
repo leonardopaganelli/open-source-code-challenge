@@ -1,19 +1,51 @@
-import React from 'react';
+import React, { useState } from 'react';
 import MaterialTable from 'material-table';
+import Button from '@material-ui/core/Button';
+
+import { makeStyles } from '@material-ui/core/styles';
+import Modal from '@material-ui/core/Modal';
+import Backdrop from '@material-ui/core/Backdrop';
+import Fade from '@material-ui/core/Fade';
+
+import TextField from '@material-ui/core/TextField';
+import InputLabel from '@material-ui/core/InputLabel';
+import MenuItem from '@material-ui/core/MenuItem';
+import FormControl from '@material-ui/core/FormControl';
+import Select from '@material-ui/core/Select';
+
+
+import './TeacherList.scss';
+
+const useStyles = makeStyles((theme) => ({
+  modal: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  paper: {
+    backgroundColor: theme.palette.background.paper,
+    boxShadow: theme.shadows[5],
+    padding: theme.spacing(2, 4, 3),
+  },
+}));
 
 export default () => {
-  const classList = [...Array(12).keys()]
+  const classes = useStyles();
+  const [classList, setClassList] = useState([...Array(12).keys()]
     .reduce((map, item) => ({
       ...map,
       [item + 1]: item + 1
     }), {})
-  const sectionList = [ ...Array(6).keys()]
+  )
+
+  const [sectionList, setSectionList] = useState([ ...Array(6).keys()]
     .reduce((map, item) => ({
       ...map,
       [item]: String.fromCharCode(65 + item)
     }), {})
+  )
 
-  const [state, setState] = React.useState({
+  const [state, setState] = useState({
     columns: [
       { title: 'Name', field: 'name' },
       { title: 'Teacher ID', field: 'id' },
@@ -34,48 +66,234 @@ export default () => {
     ],
   });
 
+  const [modalContent, setModalContent] = useState(null);
+
+  const handleOpenModal = (content) => {
+    setModalContent(content);
+  };
+
+  const handleCloseModal = () => {
+    setModalContent(null);
+  };
+
+  const updateColumnList = (lookupUpdated, columnToUpdate) => {
+    const { columns } = state
+    const columnsUpdated = columns
+      .map(column => column.field === columnToUpdate
+        ? {
+          ...column,
+          lookup: lookupUpdated
+        }
+        : column
+      )
+
+    setState({
+      ...state,
+      columns: columnsUpdated
+    })
+  }
+
+  const addClassContent = () => {
+    let newClass
+
+    const addClass = () => {
+      const newClassList = {
+        ...classList,
+        [newClass]: newClass
+      }
+
+      updateColumnList(newClassList, 'class')
+      setClassList(newClassList)
+
+      handleCloseModal()
+    }
+
+    return (
+    <div className="add-class-content">
+      <h2>Add Class</h2>
+      { newClass }
+      <TextField
+        type="number"
+        onBlur={(event) => { newClass = event.target.value }}
+      />
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={() => addClass()}
+      >
+        Add
+      </Button>
+      </div>
+  )}
+
+  const removeClassContent = () => {
+    let classToRemove
+
+    const removeClass = () => {
+      const newClassList = {
+        ...classList,
+      }
+      delete newClassList[classToRemove]
+      updateColumnList(newClassList, 'class')
+      setClassList(newClassList)
+
+      handleCloseModal()
+    }
+
+    return (
+    <div className="remove-class-content">
+      <h2 id="transition-modal-title">Remove Class</h2>
+      <FormControl>
+        <InputLabel id="class-select-label">Class</InputLabel>
+        <Select
+          labelId="class-select-label"
+          value={classToRemove}
+          onChange={(event) => { classToRemove = event.target.value}}
+        >
+          {
+            (Object.values(classList)).map(classItem => (
+              <MenuItem value={classItem}>
+                {classItem}
+              </MenuItem>
+            ))
+          }
+        </Select>
+      </FormControl>
+      <Button
+        variant="contained"
+        color="secondary"
+        onClick={() => removeClass()}
+      >
+        Remove
+      </Button>
+    </div>
+  )}
+
+  const addSectionContent = () => {
+    let newSection
+
+    const addSection = () => {
+      const newSectionList = {
+        ...sectionList,
+        [newSection]: newSection
+      }
+
+      updateColumnList(newSectionList, 'section')
+      setSectionList(newSectionList)
+
+      handleCloseModal()
+    }
+
+    return (
+    <div className="add-section-content">
+      <h2 id="transition-modal-title">Add Section</h2>
+        <TextField
+        onBlur={(event) => {
+          newSection = (event.target.value || '').trim()
+        }}
+      />
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={() => addSection()}
+      >
+        Add
+      </Button>
+    </div>
+  )}
+
+  const content = {
+    addClass: addClassContent(),
+    removeClass: removeClassContent(),
+    addSection: addSectionContent()
+  }
+
   return (
-    <MaterialTable
-      title="Teacher List"
-      columns={state.columns}
-      data={state.data}
-      editable={{
-        onRowAdd: (newData) =>
-          new Promise((resolve) => {
-            setTimeout(() => {
-              resolve();
-              setState((prevState) => {
-                const data = [...prevState.data];
-                data.push(newData);
-                return { ...prevState, data };
-              });
-            }, 600);
-          }),
-        onRowUpdate: (newData, oldData) =>
-          new Promise((resolve) => {
-            setTimeout(() => {
-              resolve();
-              if (oldData) {
+    <div className="teacher-list-content">
+      <div className="teacher-list-content__actions">
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => handleOpenModal('addClass')}
+        >
+          Add Class
+        </Button>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => handleOpenModal('removeClass')}
+        >
+          Remove Class
+        </Button>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => handleOpenModal('addSection')}
+        >
+          Add Section
+        </Button>
+      </div>
+      <MaterialTable
+        title="Teacher List"
+        columns={state.columns}
+        data={state.data}
+        editable={{
+          onRowAdd: (newData) =>
+            new Promise((resolve) => {
+              setTimeout(() => {
+                resolve();
                 setState((prevState) => {
                   const data = [...prevState.data];
-                  data[data.indexOf(oldData)] = newData;
+                  data.push(newData);
                   return { ...prevState, data };
                 });
-              }
-            }, 600);
-          }),
-        onRowDelete: (oldData) =>
-          new Promise((resolve) => {
-            setTimeout(() => {
-              resolve();
-              setState((prevState) => {
-                const data = [...prevState.data];
-                data.splice(data.indexOf(oldData), 1);
-                return { ...prevState, data };
-              });
-            }, 600);
-          }),
-      }}
-    />
+              }, 600);
+            }),
+          onRowUpdate: (newData, oldData) =>
+            new Promise((resolve) => {
+              setTimeout(() => {
+                resolve();
+                if (oldData) {
+                  setState((prevState) => {
+                    const data = [...prevState.data];
+                    data[data.indexOf(oldData)] = newData;
+                    return { ...prevState, data };
+                  });
+                }
+              }, 600);
+            }),
+          onRowDelete: (oldData) =>
+            new Promise((resolve) => {
+              setTimeout(() => {
+                resolve();
+                setState((prevState) => {
+                  const data = [...prevState.data];
+                  data.splice(data.indexOf(oldData), 1);
+                  return { ...prevState, data };
+                });
+              }, 600);
+            }),
+        }}
+      />
+
+      <Modal
+        aria-labelledby="transition-modal-title"
+        aria-describedby="transition-modal-description"
+        className={classes.modal}
+        open={!!modalContent}
+        onClose={handleCloseModal}
+        closeAfterTransition
+        BackdropComponent={Backdrop}
+        BackdropProps={{
+          timeout: 500,
+        }}
+      >
+        <Fade in={!!modalContent}>
+          <div className={classes.paper}>
+            { content[modalContent] }
+          </div>
+        </Fade>
+      </Modal>
+    </div>
   );
 }

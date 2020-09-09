@@ -1,0 +1,15 @@
+.teacher-list-content {
+  &__actions {
+    margin-bottom: 10px;
+
+    .MuiButtonBase-root{
+      margin-right: 10px;
+    }
+  }
+}
+
+.remove-class-content {
+  .MuiFormControl-root {
+    width: 100%;
+  }
+}
